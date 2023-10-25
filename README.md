@@ -3,4 +3,6 @@
 
 A simple platform for creating a 2D image using Roc 
 
+STATUS : In development, experimental
+
 
