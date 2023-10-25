@@ -1,0 +1,11 @@
+zig-out
+zig-cache
+platform/src/builtins
+
+*.o
+*.dylib
+.png
+
+.DS_Store
+examples/rocLovesGraphics
+.vscode/

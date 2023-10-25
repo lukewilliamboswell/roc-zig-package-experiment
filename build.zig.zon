@@ -1,0 +1,15 @@
+.{
+    .name = "basic-graphics",
+    .version = "0.1.0",
+    .paths = .{"README.md"},
+    .dependencies = .{
+        .zig_img = .{
+            .url = "https://github.com/lukewilliamboswell/zigimg/archive/refs/tags/0.3.tar.gz",
+            .hash = "12208e62f86ea09b244a89fde2ef957162f75f51458d8f27434c380d9bdbdeeb0d24",
+        },
+        .tvg = .{
+            .url = "https://github.com/lukewilliamboswell/tinyvg-sdk/archive/refs/tags/0.3.tar.gz",
+            .hash = "1220d25b3d8897ce9aa6658f7cc4b4db54e022e80410d065b95a813ba45877c89ce6",
+        },
+    },
+}
