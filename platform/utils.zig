@@ -25,91 +25,91 @@ extern fn shm_open(name: *const i8, oflag: c_int, mode: c_uint) c_int;
 extern fn mmap(addr: ?*anyopaque, length: c_uint, prot: c_int, flags: c_int, fd: c_int, offset: c_uint) *anyopaque;
 extern fn getppid() c_int;
 
-fn testing_roc_getppid() callconv(.C) c_int {
-    return getppid();
-}
+// fn testing_roc_getppid() callconv(.C) c_int {
+//     return getppid();
+// }
 
 fn roc_getppid_windows_stub() callconv(.C) c_int {
     return 0;
 }
 
-fn testing_roc_shm_open(name: *const i8, oflag: c_int, mode: c_uint) callconv(.C) c_int {
-    return shm_open(name, oflag, mode);
-}
-fn testing_roc_mmap(addr: ?*anyopaque, length: c_uint, prot: c_int, flags: c_int, fd: c_int, offset: c_uint) callconv(.C) *anyopaque {
-    return mmap(addr, length, prot, flags, fd, offset);
-}
+// fn testing_roc_shm_open(name: *const i8, oflag: c_int, mode: c_uint) callconv(.C) c_int {
+//     return shm_open(name, oflag, mode);
+// }
+// fn testing_roc_mmap(addr: ?*anyopaque, length: c_uint, prot: c_int, flags: c_int, fd: c_int, offset: c_uint) callconv(.C) *anyopaque {
+//     return mmap(addr, length, prot, flags, fd, offset);
+// }
 
-comptime {
-    // During tests, use the testing allocators to satisfy these functions.
-    if (builtin.is_test) {
-        @export(testing_roc_alloc, .{ .name = "roc_alloc", .linkage = .Strong });
-        @export(testing_roc_realloc, .{ .name = "roc_realloc", .linkage = .Strong });
-        @export(testing_roc_dealloc, .{ .name = "roc_dealloc", .linkage = .Strong });
-        @export(testing_roc_panic, .{ .name = "roc_panic", .linkage = .Strong });
+// comptime {
+//     // During tests, use the testing allocators to satisfy these functions.
+//     if (builtin.is_test) {
+//         @export(testing_roc_alloc, .{ .name = "roc_alloc", .linkage = .Strong });
+//         @export(testing_roc_realloc, .{ .name = "roc_realloc", .linkage = .Strong });
+//         @export(testing_roc_dealloc, .{ .name = "roc_dealloc", .linkage = .Strong });
+//         @export(testing_roc_panic, .{ .name = "roc_panic", .linkage = .Strong });
 
-        if (builtin.os.tag == .macos or builtin.os.tag == .linux) {
-            @export(testing_roc_getppid, .{ .name = "roc_getppid", .linkage = .Strong });
-            @export(testing_roc_mmap, .{ .name = "roc_mmap", .linkage = .Strong });
-            @export(testing_roc_shm_open, .{ .name = "roc_shm_open", .linkage = .Strong });
-        }
+//         if (builtin.os.tag == .macos or builtin.os.tag == .linux) {
+//             @export(testing_roc_getppid, .{ .name = "roc_getppid", .linkage = .Strong });
+//             @export(testing_roc_mmap, .{ .name = "roc_mmap", .linkage = .Strong });
+//             @export(testing_roc_shm_open, .{ .name = "roc_shm_open", .linkage = .Strong });
+//         }
 
-        if (builtin.os.tag == .windows) {
-            @export(roc_getppid_windows_stub, .{ .name = "roc_getppid", .linkage = .Strong });
-        }
-    }
-}
+//         if (builtin.os.tag == .windows) {
+//             @export(roc_getppid_windows_stub, .{ .name = "roc_getppid", .linkage = .Strong });
+//         }
+//     }
+// }
 
-fn testing_roc_alloc(size: usize, _: u32) callconv(.C) ?*anyopaque {
-    // We store an extra usize which is the size of the full allocation.
-    const full_size = size + @sizeOf(usize);
-    var raw_ptr = (std.testing.allocator.alloc(u8, full_size) catch unreachable).ptr;
-    @as([*]usize, @alignCast(@ptrCast(raw_ptr)))[0] = full_size;
-    raw_ptr += @sizeOf(usize);
-    const ptr = @as(?*anyopaque, @ptrCast(raw_ptr));
+// fn testing_roc_alloc(size: usize, _: u32) callconv(.C) ?*anyopaque {
+//     // We store an extra usize which is the size of the full allocation.
+//     const full_size = size + @sizeOf(usize);
+//     var raw_ptr = (std.testing.allocator.alloc(u8, full_size) catch unreachable).ptr;
+//     @as([*]usize, @alignCast(@ptrCast(raw_ptr)))[0] = full_size;
+//     raw_ptr += @sizeOf(usize);
+//     const ptr = @as(?*anyopaque, @ptrCast(raw_ptr));
 
-    if (DEBUG_TESTING_ALLOC and builtin.target.cpu.arch != .wasm32) {
-        std.debug.print("+ alloc {*}: {} bytes\n", .{ ptr, size });
-    }
+//     if (DEBUG_TESTING_ALLOC and builtin.target.cpu.arch != .wasm32) {
+//         std.debug.print("+ alloc {*}: {} bytes\n", .{ ptr, size });
+//     }
 
-    return ptr;
-}
+//     return ptr;
+// }
 
-fn testing_roc_realloc(c_ptr: *anyopaque, new_size: usize, old_size: usize, _: u32) callconv(.C) ?*anyopaque {
-    const raw_ptr = @as([*]u8, @ptrCast(c_ptr)) - @sizeOf(usize);
-    const slice = raw_ptr[0..(old_size + @sizeOf(usize))];
+// fn testing_roc_realloc(c_ptr: *anyopaque, new_size: usize, old_size: usize, _: u32) callconv(.C) ?*anyopaque {
+//     const raw_ptr = @as([*]u8, @ptrCast(c_ptr)) - @sizeOf(usize);
+//     const slice = raw_ptr[0..(old_size + @sizeOf(usize))];
 
-    const new_full_size = new_size + @sizeOf(usize);
-    var new_raw_ptr = (std.testing.allocator.realloc(slice, new_full_size) catch unreachable).ptr;
-    @as([*]usize, @alignCast(@ptrCast(new_raw_ptr)))[0] = new_full_size;
-    new_raw_ptr += @sizeOf(usize);
-    const new_ptr = @as(?*anyopaque, @ptrCast(new_raw_ptr));
+//     const new_full_size = new_size + @sizeOf(usize);
+//     var new_raw_ptr = (std.testing.allocator.realloc(slice, new_full_size) catch unreachable).ptr;
+//     @as([*]usize, @alignCast(@ptrCast(new_raw_ptr)))[0] = new_full_size;
+//     new_raw_ptr += @sizeOf(usize);
+//     const new_ptr = @as(?*anyopaque, @ptrCast(new_raw_ptr));
 
-    if (DEBUG_TESTING_ALLOC and builtin.target.cpu.arch != .wasm32) {
-        std.debug.print("- realloc {*}\n", .{new_ptr});
-    }
+//     if (DEBUG_TESTING_ALLOC and builtin.target.cpu.arch != .wasm32) {
+//         std.debug.print("- realloc {*}\n", .{new_ptr});
+//     }
 
-    return new_ptr;
-}
+//     return new_ptr;
+// }
 
-fn testing_roc_dealloc(c_ptr: *anyopaque, _: u32) callconv(.C) void {
-    const raw_ptr = @as([*]u8, @ptrCast(c_ptr)) - @sizeOf(usize);
-    const full_size = @as([*]usize, @alignCast(@ptrCast(raw_ptr)))[0];
-    const slice = raw_ptr[0..full_size];
+// fn testing_roc_dealloc(c_ptr: *anyopaque, _: u32) callconv(.C) void {
+//     const raw_ptr = @as([*]u8, @ptrCast(c_ptr)) - @sizeOf(usize);
+//     const full_size = @as([*]usize, @alignCast(@ptrCast(raw_ptr)))[0];
+//     const slice = raw_ptr[0..full_size];
 
-    if (DEBUG_TESTING_ALLOC and builtin.target.cpu.arch != .wasm32) {
-        std.debug.print("💀 dealloc {*}\n", .{slice.ptr});
-    }
+//     if (DEBUG_TESTING_ALLOC and builtin.target.cpu.arch != .wasm32) {
+//         std.debug.print("💀 dealloc {*}\n", .{slice.ptr});
+//     }
 
-    std.testing.allocator.free(slice);
-}
+//     std.testing.allocator.free(slice);
+// }
 
-fn testing_roc_panic(c_ptr: *anyopaque, tag_id: u32) callconv(.C) void {
-    _ = c_ptr;
-    _ = tag_id;
+// fn testing_roc_panic(c_ptr: *anyopaque, tag_id: u32) callconv(.C) void {
+//     _ = c_ptr;
+//     _ = tag_id;
 
-    @panic("Roc panicked");
-}
+//     @panic("Roc panicked");
+// }
 
 pub fn alloc(size: usize, alignment: u32) ?[*]u8 {
     return @as(?[*]u8, @ptrCast(roc_alloc(size, alignment)));
@@ -126,19 +126,19 @@ pub fn dealloc(c_ptr: [*]u8, alignment: u32) void {
     return roc_dealloc(c_ptr, alignment);
 }
 
-// indirection because otherwise zig creates an alias to the panic function which our LLVM code
-// does not know how to deal with
-pub fn test_panic(c_ptr: *anyopaque, crash_tag: u32) callconv(.C) void {
-    _ = c_ptr;
-    _ = crash_tag;
+// // indirection because otherwise zig creates an alias to the panic function which our LLVM code
+// // does not know how to deal with
+// pub fn test_panic(c_ptr: *anyopaque, crash_tag: u32) callconv(.C) void {
+//     _ = c_ptr;
+//     _ = crash_tag;
 
-    //    const cstr = @ptrCast([*:0]u8, c_ptr);
-    //
-    //    const stderr = std.io.getStdErr().writer();
-    //    stderr.print("Roc panicked: {s}!\n", .{cstr}) catch unreachable;
-    //
-    //    std.c.exit(1);
-}
+//     //    const cstr = @ptrCast([*:0]u8, c_ptr);
+//     //
+//     //    const stderr = std.io.getStdErr().writer();
+//     //    stderr.print("Roc panicked: {s}!\n", .{cstr}) catch unreachable;
+//     //
+//     //    std.c.exit(1);
+// }
 
 pub const Inc = fn (?[*]u8) callconv(.C) void;
 pub const IncN = fn (?[*]u8, u64) callconv(.C) void;

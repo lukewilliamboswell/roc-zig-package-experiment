@@ -95,47 +95,45 @@ const Allocator = mem.Allocator;
 
 extern fn roc__mainForHost_1_exposed_generic(*RocStr, *RocStr) void;
 
-const FromRoc = struct {
-    format: []const u8,
-    data: []const u8,
-    path: []const u8,
-};
-
 pub fn main() !u8 {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
-
     const allocator = arena.allocator();
 
     const stdout = std.io.getStdOut().writer();
     // const stderr = std.io.getStdErr().writer();
 
+    // Start the timer
     var timer = std.time.Timer.start() catch unreachable;
 
-    var image_tvg_text = callRoc(RocStr.fromSlice(""));
-    defer image_tvg_text.decref();
+    // Get the TVG text format from Roc
+    var tvg_text_from_roc = callRoc(RocStr.fromSlice(""));
+    defer tvg_text_from_roc.decref();
 
-    // // Parse the TVG text format bytes into a TVG binary format
+    // Parse the TVG text format bytes into a TVG binary format
     var intermediary_tvg = std.ArrayList(u8).init(allocator);
     defer intermediary_tvg.deinit();
-    try tvg.text.parse(allocator, image_tvg_text.asSlice(), intermediary_tvg.writer());
+    try tvg.text.parse(allocator, tvg_text_from_roc.asSlice(), intermediary_tvg.writer());
+
+    // Get the size of the image from Roc
+    var size_from_roc: RocStr = callRoc(RocStr.fromSlice("SIZE"));
+    defer size_from_roc.decref();
+    const size: tvg.rendering.SizeHint = try sizeFromRocStr(size_from_roc);
+
+    // Get the anti aliasing for the image from Roc
+    var alias_from_roc: RocStr = callRoc(RocStr.fromSlice("ALIAS"));
+    defer alias_from_roc.decref();
+    const anit_alias: tvg.rendering.AntiAliasing = try aliasFromRocStr(alias_from_roc);
 
     // Render TVG binary format into a framebuffer
     var stream = std.io.fixedBufferStream(intermediary_tvg.items);
-    // TODO let the user set these parameters
-    const size: tvg.rendering.SizeHint = try getSize();
     var tImage = try tvg.rendering.renderStream(
         allocator,
         allocator,
         size,
-        // ^^ Can also specify a size here which improves the quality of the rendering at the cost of speed
-        // rendering.SizeHint{ .size = rendering.Size{ .width = (1920 / 2), .height = (1080 / 2) } },
-        .x4,
-        // ^^ Can specify other anti aliasing modes .x4, .x9, .x16, .x25
+        anit_alias,
         stream.reader(),
     );
-
-    std.debug.print("size {any}", .{size});
 
     // Convert the framebuffer into a zig image
     var zImage = try zigimg.Image.create(allocator, tImage.width, tImage.height, .rgba32);
@@ -148,19 +146,12 @@ pub fn main() !u8 {
         zImage.pixels.rgba32[i].a = pixel.a;
     }
 
-    const pixel_count: usize = tImage.width * tImage.height;
+    // Get the title for the image from Roc
+    var title_from_roc: RocStr = callRoc(RocStr.fromSlice("TITLE"));
+    defer title_from_roc.decref();
 
-    std.debug.assert(zImage.pixels.len() == pixel_count);
-
-    // std.debug.print("\nallocator: {any}\nwidth: {any}\nheight: {any}\npixels: {any}\nanimation: {any}\n", .{
-    //     zImage.allocator,
-    //     zImage.width,
-    //     zImage.height,
-    //     zImage.pixels,
-    //     zImage.animation,
-    // });
-
-    try zImage.writeToFilePath("zigimg.png", zigimg.Image.EncoderOptions{
+    const title = try std.fmt.allocPrint(allocator, "{s}.png", .{title_from_roc.asSlice()});
+    try zImage.writeToFilePath(title, zigimg.Image.EncoderOptions{
         .png = .{},
     });
 
@@ -179,16 +170,10 @@ fn callRoc(arg: RocStr) RocStr {
     return callresult;
 }
 
-fn getSize() !tvg.rendering.SizeHint {
-    var callresult = RocStr.empty();
-    defer callresult.decref();
+// Try to parse width and height, or use default .inherit
+fn sizeFromRocStr(sizeStr: RocStr) !tvg.rendering.SizeHint {
+    var splitIterator = std.mem.splitScalar(u8, sizeStr.asSlice(), '|');
 
-    var arg = RocStr.fromSlice("SIZE");
-    defer arg.decref();
-
-    roc__mainForHost_1_exposed_generic(&callresult, @constCast(&arg));
-
-    var splitIterator = std.mem.splitScalar(u8, callresult.asSlice(), '|');
     const width = splitIterator.next() orelse return .inherit;
     const height = splitIterator.next() orelse return .inherit;
 
@@ -196,4 +181,31 @@ fn getSize() !tvg.rendering.SizeHint {
         .width = try std.fmt.parseInt(u32, width, 10),
         .height = try std.fmt.parseInt(u32, height, 10),
     } };
+}
+
+// Try to parse anti aliasing, or use default .x4
+fn aliasFromRocStr(aliasStr: RocStr) !tvg.rendering.AntiAliasing {
+    const bytes = aliasStr.asSlice();
+
+    if (std.mem.eql(u8, bytes, "X1")) {
+        return .x1;
+    }
+
+    if (std.mem.eql(u8, bytes, "X4")) {
+        return .x4;
+    }
+
+    if (std.mem.eql(u8, bytes, "X9")) {
+        return .x9;
+    }
+
+    if (std.mem.eql(u8, bytes, "X16")) {
+        return .x16;
+    }
+
+    if (std.mem.eql(u8, bytes, "X25")) {
+        return .x25;
+    }
+
+    return .x4;
 }
