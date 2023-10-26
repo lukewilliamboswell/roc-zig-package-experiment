@@ -1,6 +1,5 @@
 app "example"
     packages {
-        # pf: "https://github.com/lukewilliamboswell/roc-things/releases/download/test-graphics/_P85vkqYR8LdQD5FowyGURrNZ1wvrl1KopIvB4sGgGA.tar.br",
         pf: "../platform/main.roc",
         tvg: "https://github.com/lukewilliamboswell/roc-tinvyvg/releases/download/0.2/ZyZBFnr3PEd5fWq70Z6w2ASK7bSxarh8Wj2Xq7o7IUE.tar.br",
     }

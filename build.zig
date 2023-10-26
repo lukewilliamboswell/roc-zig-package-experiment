@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) !void {
     }).module("zigimg");
 
     const lib = b.addStaticLibrary(.{
-        .name = "basic-graphics",
+        .name = "graphics",
         .root_source_file = .{ .path = "platform/host.zig" },
         .target = target,
         .optimize = optimize,
