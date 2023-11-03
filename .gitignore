@@ -9,3 +9,7 @@ platform/src/builtins
 .DS_Store
 examples/rocLovesGraphics
 .vscode/
+
+*.tar.br
+
+*.png

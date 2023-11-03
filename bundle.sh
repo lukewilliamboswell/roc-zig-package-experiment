@@ -1,5 +1,11 @@
 #!/bin/bash
 
+## Get the directory of the currently executing script
+DIR="$(dirname "$0")"
+
+# Change to that directory
+cd "$DIR" || exit
+
 lib="libgraphics.a"
 
 # Build for macos-arm64

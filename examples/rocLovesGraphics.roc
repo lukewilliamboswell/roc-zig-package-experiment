@@ -14,7 +14,7 @@ app "example"
     provides [main] to pf
 
 main = { title: "bird", content: tvgText }
-           
+
 tvgText =
     graphic =
         g0 = Graphic.graphic {}
