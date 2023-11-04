@@ -4,12 +4,12 @@
     .paths = .{"README.md"},
     .dependencies = .{
         .zig_img = .{
-            .url = "https://github.com/lukewilliamboswell/zigimg/archive/refs/tags/0.3.tar.gz",
-            .hash = "12208e62f86ea09b244a89fde2ef957162f75f51458d8f27434c380d9bdbdeeb0d24",
+            .url = "https://github.com/lukewilliamboswell/zigimg/archive/refs/tags/zig-11.tar.gz",
+            .hash = "1220729f80ee8b0649ee3bd31e12db2d263f8782b696ac1e2b66c63c4e062cf15a2d",
         },
         .tvg = .{
-            .url = "https://github.com/lukewilliamboswell/tinyvg-sdk/archive/refs/tags/0.3.tar.gz",
-            .hash = "1220d25b3d8897ce9aa6658f7cc4b4db54e022e80410d065b95a813ba45877c89ce6",
+            .url = "https://github.com/lukewilliamboswell/tinyvg-sdk/archive/refs/tags/zig-11.tar.gz",
+            .hash = "1220a7a8830fd1451916c952670cbef576ced202cbbf1c7db9dc66512228ccdd3d36",
         },
     },
 }
