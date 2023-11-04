@@ -14,15 +14,19 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     }).module("zigimg");
 
-    const lib = b.addStaticLibrary(.{
+    const obj = b.addObject(.{
         .name = "graphics",
         .root_source_file = .{ .path = "platform/host.zig" },
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
     });
+    obj.force_pic = true;
+    obj.disable_stack_probing = true;
 
-    lib.addModule("tinyvg", tvg_dep);
-    lib.addModule("zigimg", zig_img_dep);
+    obj.addModule("tinyvg", tvg_dep);
+    obj.addModule("zigimg", zig_img_dep);
 
-    b.installArtifact(lib);
+    const install_obj = b.addInstallFile(obj.getEmittedBin(), "host.o");
+    b.default_step.dependOn(&install_obj.step);
 }
