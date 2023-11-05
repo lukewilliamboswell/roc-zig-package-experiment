@@ -18,10 +18,15 @@ rm -rf zig-out/
 zig build -Dtarget=x86_64-macos
 cp zig-out/$obj platform/macos-x64.o
 
-# Build for linux-x64
+# Build for linux-x64 including surgical linker host
+roc gen-stub-lib --target linux-x64 examples/rocLovesGraphics.roc
+
 rm -rf zig-out/
-zig build -Dtarget=x86_64-linux
+zig build -Dtarget=x86_64-linux-gnu
 cp zig-out/$obj platform/linux-x64.o
+cp zig-out/bin/dynhost platform/dynhost
+
+roc preprocess-host --target linux-x64 examples/rocLovesGraphics.roc
 
 # TEST RUN USING NATIVE
 roc run --prebuilt-platform examples/rocLovesGraphics.roc
