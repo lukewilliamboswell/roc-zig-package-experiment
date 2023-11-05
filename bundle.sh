@@ -6,22 +6,22 @@ DIR="$(dirname "$0")"
 # Change to that directory
 cd "$DIR" || exit
 
-lib="libgraphics.a"
+obj="host.o"
 
 # Build for macos-arm64
 rm -rf zig-out/
 zig build -Dtarget=aarch64-macos
-cp zig-out/lib/$lib platform/macos-arm64.o  
+cp zig-out/$obj platform/macos-arm64.o
 
 # Build for macos-x64
 rm -rf zig-out/
 zig build -Dtarget=x86_64-macos
-cp zig-out/lib/$lib platform/macos-x64.o  
+cp zig-out/$obj platform/macos-x64.o
 
 # Build for linux-x64
 rm -rf zig-out/
 zig build -Dtarget=x86_64-linux
-cp zig-out/lib/$lib platform/linux-x64.o  
+cp zig-out/$obj platform/linux-x64.o
 
 # TEST RUN USING NATIVE
 roc run --prebuilt-platform examples/rocLovesGraphics.roc
