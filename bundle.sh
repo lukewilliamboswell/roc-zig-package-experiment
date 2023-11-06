@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ## Get the directory of the currently executing script
 DIR="$(dirname "$0")"
@@ -6,24 +7,24 @@ DIR="$(dirname "$0")"
 # Change to that directory
 cd "$DIR" || exit
 
-obj="host.o"
+lib="libgraphics.a"
 
 # Build for macos-arm64
 rm -rf zig-out/
 zig build -Dtarget=aarch64-macos
-cp zig-out/$obj platform/macos-arm64.o
+cp zig-out/lib/$lib platform/macos-arm64.a
 
 # Build for macos-x64
 rm -rf zig-out/
 zig build -Dtarget=x86_64-macos
-cp zig-out/$obj platform/macos-x64.o
+cp zig-out/lib/$lib platform/macos-x64.a
 
 # Build for linux-x64 including surgical linker host
 roc gen-stub-lib --target linux-x64 examples/rocLovesGraphics.roc
 
 rm -rf zig-out/
 zig build -Dtarget=x86_64-linux-gnu
-cp zig-out/$obj platform/linux-x64.o
+cp zig-out/lib/$lib platform/linux-x64.a
 cp zig-out/bin/dynhost platform/dynhost
 
 roc preprocess-host --target linux-x64 examples/rocLovesGraphics.roc
